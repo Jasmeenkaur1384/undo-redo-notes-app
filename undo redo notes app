@@ -1,0 +1,132 @@
+#include <stdio.h>
+#include <string.h>
+
+#define MAX_NOTES 100
+#define MAX_NOTE_LEN 256
+
+typedef struct {
+    char notes[MAX_NOTES][MAX_NOTE_LEN];
+    int top;
+} Stack;
+
+void init_stack(Stack *s) {
+    s->top = -1;
+}
+
+int is_empty(Stack *s) {
+    return s->top == -1;
+}
+
+int is_full(Stack *s) {
+    return s->top == MAX_NOTES - 1;
+}
+
+void push(Stack *s, const char *note) {
+    if (is_full(s)) {
+        printf("Stack is full! Cannot add more notes.\n");
+        return;
+    }
+
+    s->top++;
+    strncpy(s->notes[s->top], note, MAX_NOTE_LEN - 1);
+    s->notes[s->top][MAX_NOTE_LEN - 1] = '\0';
+}
+
+void move_top(Stack *from, Stack *to) {
+    if (is_empty(from)) {
+        return;
+    }
+
+    push(to, from->notes[from->top]);
+    from->top--;
+}
+
+void print_notes(Stack *s) {
+    if (is_empty(s)) {
+        printf("No notes available.\n");
+        return;
+    }
+
+    printf("\nCurrent Notes:\n");
+    for (int i = 0; i <= s->top; i++) {
+        printf("%d. %s\n", i + 1, s->notes[i]);
+    }
+}
+
+int main() {
+    Stack notesStack, redoStack;
+
+    init_stack(&notesStack);
+    init_stack(&redoStack);
+
+    char input[MAX_NOTE_LEN];
+    int choice;
+
+    printf("=== Smart Notes App with Undo/Redo ===\n");
+
+    while (1) {
+        printf("\nMenu:\n");
+        printf("1. Add Note\n");
+        printf("2. View Notes\n");
+        printf("3. Undo\n");
+        printf("4. Redo\n");
+        printf("5. Exit\n");
+        printf("Enter choice: ");
+
+        if (scanf("%d", &choice) != 1) {
+            while (getchar() != '\n');
+            printf("Invalid input.\n");
+            continue;
+        }
+
+        while (getchar() != '\n');
+
+        switch (choice) {
+            case 1:
+                printf("Enter note: ");
+                fgets(input, sizeof(input), stdin);
+                input[strcspn(input, "\n")] = '\0';
+
+                if (strlen(input) == 0) {
+                    printf("Empty note cannot be added.\n");
+                    break;
+                }
+
+                init_stack(&redoStack);
+                push(&notesStack, input);
+                printf("Note added successfully.\n");
+                break;
+
+            case 2:
+                print_notes(&notesStack);
+                break;
+
+            case 3:
+                if (is_empty(&notesStack)) {
+                    printf("Nothing to undo.\n");
+                } else {
+                    move_top(&notesStack, &redoStack);
+                    printf("Last note undone.\n");
+                }
+                break;
+
+            case 4:
+                if (is_empty(&redoStack)) {
+                    printf("Nothing to redo.\n");
+                } else {
+                    move_top(&redoStack, &notesStack);
+                    printf("Last undone note restored.\n");
+                }
+                break;
+
+            case 5:
+                printf("Goodbye!\n");
+                return 0;
+
+            default:
+                printf("Invalid choice. Please try again.\n");
+        }
+    }
+
+    return 0;
+}
